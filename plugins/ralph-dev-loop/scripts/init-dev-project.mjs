@@ -11,7 +11,9 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const projectDir = process.argv[2] || process.cwd();
+// Filter out flags (--init, etc.) and use the first non-flag arg as project dir
+const args = process.argv.slice(2).filter(a => !a.startsWith('--'));
+const projectDir = args[0] || process.cwd();
 const resolvedDir = resolve(projectDir);
 
 // Create progress file
