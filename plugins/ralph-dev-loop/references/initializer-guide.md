@@ -1,0 +1,217 @@
+# Initializer Guide
+
+## Overview
+
+The Initializer phase sets up everything the Coding Agent needs to work autonomously. A well-structured initialization prevents most failure modes in long-running development loops.
+
+## Feature Decomposition
+
+### Granularity Principles
+
+Features should be:
+- **Atomic**: Completable in a single iteration (15-30 minutes of work)
+- **Testable**: Has concrete verification steps that can be automated
+- **Independent**: Minimal dependencies on other uncompleted features
+- **Ordered**: Infrastructure before functional, functional before polish
+
+### Good vs Bad Feature Granularity
+
+**Too coarse (bad):**
+```json
+{
+  "description": "Build the entire user authentication system",
+  "steps": ["Auth works"]
+}
+```
+
+**Too fine (bad):**
+```json
+{
+  "description": "Add the email input field to the login form",
+  "steps": ["Email field exists"]
+}
+```
+
+**Just right:**
+```json
+{
+  "description": "User can log in with email and password",
+  "steps": [
+    "POST /api/auth/login with valid credentials returns 200 + JWT token",
+    "POST /api/auth/login with invalid credentials returns 401",
+    "JWT token contains user ID and email in payload"
+  ]
+}
+```
+
+### Category Guidelines
+
+| Category | When to Use | Priority |
+|----------|------------|----------|
+| `infrastructure` | Project setup, build config, DB schema, base routing | 1 (first) |
+| `functional` | Core business logic, API endpoints, data operations | 2 |
+| `ui` | Frontend components, layouts, styling | 3 |
+| `integration` | Third-party services, external APIs, WebSockets | 4 |
+| `polish` | Error handling, edge cases, performance, UX improvements | 5 (last) |
+
+### Feature Count Guidelines
+
+| Project Size | Feature Count |
+|-------------|--------------|
+| Small (script, CLI tool) | 5-10 features |
+| Medium (API, small web app) | 10-20 features |
+| Large (full-stack app) | 20-40 features |
+
+## Writing Verification Steps
+
+### Principles
+
+1. **Be specific**: "Returns 200" not "Works correctly"
+2. **Be automatable**: Steps should be verifiable by running commands
+3. **Cover the contract**: Input → Output, not implementation details
+4. **Include error cases**: At least one negative test per feature
+
+### Examples by Tech Stack
+
+**REST API (Node.js/Express):**
+```json
+{
+  "description": "CRUD operations for todo items",
+  "steps": [
+    "GET /api/todos returns 200 with array",
+    "POST /api/todos with {title, completed} returns 201 with created todo",
+    "PUT /api/todos/:id updates and returns 200",
+    "DELETE /api/todos/:id returns 204",
+    "POST /api/todos with missing title returns 400"
+  ]
+}
+```
+
+**React Frontend:**
+```json
+{
+  "description": "Todo list displays items from API",
+  "steps": [
+    "TodoList component renders without crashing",
+    "Displays loading state while fetching",
+    "Shows all todos from GET /api/todos response",
+    "Each todo shows title and completion checkbox",
+    "Empty state message when no todos exist"
+  ]
+}
+```
+
+**Python CLI:**
+```json
+{
+  "description": "CLI parses and validates config file",
+  "steps": [
+    "Reads config.yaml from --config flag path",
+    "Exits with code 1 and error message for missing file",
+    "Exits with code 1 for invalid YAML syntax",
+    "Correctly parses all required fields into Config dataclass"
+  ]
+}
+```
+
+## init.sh / init.cmd Examples
+
+### Node.js (React + Express)
+
+**init.sh:**
+```bash
+#!/bin/bash
+set -euo pipefail
+
+# Install dependencies
+npm install
+
+# Start backend
+cd server && npm run dev &
+SERVER_PID=$!
+echo "Server PID: $SERVER_PID"
+
+# Wait for server to be ready
+sleep 3
+curl -s http://localhost:3001/health || echo "Warning: Server not responding"
+
+# Start frontend
+cd ../client && npm start &
+CLIENT_PID=$!
+echo "Client PID: $CLIENT_PID"
+
+echo "Dev environment ready"
+echo "  Backend:  http://localhost:3001"
+echo "  Frontend: http://localhost:3000"
+```
+
+**init.cmd:**
+```cmd
+@echo off
+npm install
+cd server && start /B npm run dev
+timeout /t 3
+cd ..\client && start /B npm start
+echo Dev environment ready
+```
+
+### Python (FastAPI)
+
+**init.sh:**
+```bash
+#!/bin/bash
+set -euo pipefail
+
+python -m venv .venv 2>/dev/null || true
+source .venv/bin/activate
+pip install -r requirements.txt -q
+
+# Start dev server
+uvicorn main:app --reload --port 8000 &
+sleep 2
+curl -s http://localhost:8000/docs || echo "Warning: Server not responding"
+
+echo "Dev environment ready at http://localhost:8000"
+```
+
+### Rust (Actix-web)
+
+**init.sh:**
+```bash
+#!/bin/bash
+set -euo pipefail
+
+cargo build 2>&1
+cargo run &
+sleep 3
+curl -s http://localhost:8080/health || echo "Warning: Server not responding"
+
+echo "Dev environment ready at http://localhost:8080"
+```
+
+## Project Structure Recommendations
+
+For the Initializer to set up correctly, projects should follow standard conventions:
+
+```
+project/
+├── feature_list.json        # Generated by initializer
+├── claude-progress.txt      # Generated by initializer
+├── init.sh                  # Generated by initializer (macOS/Linux)
+├── init.cmd                 # Generated by initializer (Windows)
+├── .gitignore               # Should exist before init
+├── src/                     # Source code
+├── tests/                   # Test files
+└── README.md                # Project documentation
+```
+
+## Common Initialization Mistakes
+
+| Mistake | Fix |
+|---------|-----|
+| Features too vague | Add specific verification steps |
+| No infrastructure features | Always start with project setup |
+| init.sh doesn't wait for server | Add `sleep` + health check |
+| Features depend on each other | Reorder so dependencies come first |
+| Too many features (50+) | Group related items, aim for 10-30 |
+| No error case verification | Add at least one negative test per feature |

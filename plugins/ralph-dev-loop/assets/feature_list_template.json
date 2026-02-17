@@ -1,0 +1,13 @@
+{
+  "project": "PROJECT_NAME",
+  "generated_at": "TIMESTAMP",
+  "features": [
+    {
+      "id": 1,
+      "category": "infrastructure",
+      "description": "REPLACE: describe the feature",
+      "steps": ["REPLACE: verification step 1"],
+      "passes": false
+    }
+  ]
+}

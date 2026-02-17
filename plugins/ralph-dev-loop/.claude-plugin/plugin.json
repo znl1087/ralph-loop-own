@@ -1,0 +1,5 @@
+{
+  "name": "ralph-dev-loop",
+  "description": "Long-running autonomous development loop with structured progress tracking. Combines Ralph Loop iteration with Anthropic's initializer + coding agent pattern.",
+  "author": { "name": "User" }
+}

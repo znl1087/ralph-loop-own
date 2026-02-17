@@ -1,0 +1,15 @@
+{
+  "description": "Ralph Dev Loop stop hook for autonomous development iterations",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/stop-hook.mjs"
+          }
+        ]
+      }
+    ]
+  }
+}
